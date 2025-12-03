@@ -4,12 +4,10 @@
 #include <iostream>
 #include <string>
 
-// const char* 版: 既存呼び出しと互換。文字列版へ委譲
 void loadAndDrawTitle(const char* filename) {
     loadAndDrawTitle(std::string(filename));
 }
 
-// ファイル内容をそのまま表示
 void loadAndDrawTitle(const std::string& filename) {
     std::ifstream fin(filename);
     if (!fin) {

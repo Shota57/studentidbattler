@@ -127,6 +127,7 @@
     <ClCompile Include="console.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Meibo.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="status.cpp" />
     <ClCompile Include="title.cpp" />
@@ -136,9 +137,13 @@
     <ClInclude Include="conioex.h" />
     <ClInclude Include="console.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="Meibo.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="status.h" />
     <ClInclude Include="title.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CONTRIBUTING.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,5 +8,8 @@ struct Status {
     int speed;
 };
 
+bool isValidName(const std::string& name);
+
 bool isValidId(const std::string& id);
+
 Status generateStatus(const std::string& studentId);

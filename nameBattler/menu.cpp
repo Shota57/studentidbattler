@@ -1,7 +1,7 @@
 #include "menu.h"
 #include <iostream>
 #include <cstdlib>
-#include <conio.h> // _getch 用（conioex.h は外す）
+#include <conio.h> 
 
 int showMenu()
 {
