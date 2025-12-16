@@ -1,13 +1,11 @@
-#include "console.h"    // console.hヘッダをインクルード
-#include <iostream>     // 標準入出力（cin, cout）を使うためのヘッダ
-#include <iomanip>      // 出力整形（setwなど）を使うためのヘッダ
-#include <conio.h>      // コンソール入出力を使うためのヘッダ
-#include <windows.h>    // Windows APIを使うためのヘッダ
-#include <string.h>     // 文字列操作関数を使うためのヘッダ
-
+#include "console.h"
+#include <iostream>
+#include <iomanip>
+#include <conio.h>
+#include <windows.h>
+#include <string.h>
 
 void SetCursorVisibility(BOOL visible) {
-
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_CURSOR_INFO cursorInfo;
 	GetConsoleCursorInfo(hConsole, &cursorInfo);
@@ -21,16 +19,43 @@ void MoveCursorToTop() {
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-// コンソールの初期化
+// 追加: 汎用カーソル移動
+void SetCursorPosition(int col, int row) {
+	if (col < 0) col = 0;
+	if (row < 0) row = 0;
+	if (col >= CONSOLE_WIDTH) col = CONSOLE_WIDTH - 1;
+	if (row >= CONSOLE_HEIGHT) row = CONSOLE_HEIGHT - 1;
+	COORD coord = { static_cast<SHORT>(col), static_cast<SHORT>(row) };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+// 追加: 指定行に中央表示
+void PrintCenteredLine(const char* text, int row) {
+	if (!text) return;
+	int len = static_cast<int>(strlen(text));
+	int col = (CONSOLE_WIDTH - len) / 2;
+	if (col < 0) col = 0;
+	SetCursorPosition(col, row);
+	std::cout << text;
+}
+
+// 追加: ブロック中央表示（垂直・水平）
+void PrintCenteredBlock(const char* const* lines, int count) {
+	if (!lines || count <= 0) return;
+	int startRow = (CONSOLE_HEIGHT - count) / 2;
+	if (startRow < 0) startRow = 0;
+	for (int i = 0; i < count; ++i) {
+		PrintCenteredLine(lines[i], startRow + i);
+	}
+}
+
+// 以降、既存の関数はそのまま
 bool CL11Startup() {
-	// Change console size コンソールサイズの変更
 	if (!changeConsoleSize(CONSOLE_WIDTH, CONSOLE_HEIGHT)) {
 		return FALSE;
 	}
-	// コンソールのタイトルバーを隠す
 	HideConsoleTitleBar();
 
-	// 画面の幅と高さを取得
 	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 	HDC screen = GetDC(0);
@@ -38,26 +63,21 @@ bool CL11Startup() {
 	int dpiY = GetDeviceCaps(screen, LOGPIXELSY);
 	ReleaseDC(0, screen);
 
-	// コンソールフォントの設定
 	setConsoleFont(CONSOLE_WIDTH, CONSOLE_HEIGHT, screenWidth, screenHeight, dpiX, dpiY);
-	// Center the console window コンソールウィンドウを中央に配置
 	centerConsoleWindow(screenWidth, screenHeight);
 	return TRUE;
 }
 
-// コンソールフォントの設定
 void setConsoleFont(int width, int height, int screenWidth, int screenHeight, int dpiX, int dpiY) {
 	int fontSizeX = (screenWidth / width) * (dpiX / 96);
 	int fontSizeY = (screenHeight / height) * (dpiY / 96);
 
-	// Set font information フォント情報の設定
 	CONSOLE_FONT_INFOEX cfi = { sizeof(CONSOLE_FONT_INFOEX), 0, {0, 0}, FF_DONTCARE, FW_NORMAL, L"MS Gothic" };
 	DISPLAY_DEVICE dd = { sizeof(dd) };
 	EnumDisplayDevices(NULL, 0, &dd, 0);
 	DEVMODE dm = { sizeof(dm) };
 	EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm);
 
-	// フォントサイズの設定
 	if (dm.dmPelsHeight > dm.dmPelsWidth) {
 		cfi.dwFontSize.X = static_cast<SHORT>(fontSizeX);
 		cfi.dwFontSize.Y = static_cast<SHORT>(floor(fontSizeX * 2));
@@ -67,7 +87,6 @@ void setConsoleFont(int width, int height, int screenWidth, int screenHeight, in
 		cfi.dwFontSize.Y = static_cast<SHORT>(fontSizeY);
 	}
 
-	// コンソールフォントの適用
 	SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	COORD bufferSize = { static_cast<SHORT>(width), static_cast<SHORT>(height) };
 	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), bufferSize);
@@ -75,7 +94,6 @@ void setConsoleFont(int width, int height, int screenWidth, int screenHeight, in
 	SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &windowSize);
 }
 
-// コンソールウィンドウを中央に配置する関数
 void centerConsoleWindow(int screenWidth, int screenHeight) {
 	HWND consoleWindow = GetConsoleWindow();
 	RECT rect;
@@ -83,16 +101,13 @@ void centerConsoleWindow(int screenWidth, int screenHeight) {
 	MoveWindow(consoleWindow, (screenWidth - (rect.right - rect.left)) / 2, (screenHeight - (rect.bottom - rect.top)) / 2, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 }
 
-// コンソールのクリーンアップ関数
 bool CL11Cleanup() {
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 
-	// Set console mode コンソールモードの設定
 	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
 	SetConsoleMode(hIn, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
 
-	// Set console buffer size コンソールバッファサイズの設定
 	COORD bufferSize = { CONSOLE_WIDTH, CONSOLE_HEIGHT };
 	SetConsoleScreenBufferSize(hOut, bufferSize);
 	CONSOLE_CURSOR_INFO cursorInfo = { 25, TRUE };
@@ -100,11 +115,9 @@ bool CL11Cleanup() {
 	SMALL_RECT windowSize = { 0, 0, CONSOLE_WIDTH - 1, CONSOLE_HEIGHT - 1 };
 	SetConsoleWindowInfo(hOut, TRUE, &windowSize);
 
-	// Set font information フォント情報の設定
 	CONSOLE_FONT_INFOEX cfi = { sizeof(CONSOLE_FONT_INFOEX), 0, {0, 16}, FF_DONTCARE, FW_NORMAL, L"Consolas" };
 	SetCurrentConsoleFontEx(hOut, FALSE, &cfi);
 
-	// Reset console window position コンソールウィンドウの位置をリセット
 	HWND consoleWindow = GetConsoleWindow();
 	SetWindowPos(consoleWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 	ShowConsoleTitleBar();
@@ -112,13 +125,11 @@ bool CL11Cleanup() {
 	return TRUE;
 }
 
-// コンソールサイズを変更する関数
 bool changeConsoleSize(int x, int y) {
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 	SMALL_RECT rectConsoleSize = { 0, 0, 1, 1 };
 
-	// Temporarily reduce console window size コンソールウィンドウサイズの一時的な縮小
 	SetConsoleWindowInfo(hStdout, TRUE, &rectConsoleSize);
 	if (!SetConsoleScreenBufferSize(hStdout, coord)) {
 		return FALSE;
@@ -130,7 +141,6 @@ bool changeConsoleSize(int x, int y) {
 	return TRUE;
 }
 
-// コンソールのタイトルバーを隠す関数
 void HideConsoleTitleBar() {
 	HWND hwnd = GetConsoleWindow();
 	if (hwnd != NULL) {
@@ -141,7 +151,6 @@ void HideConsoleTitleBar() {
 	}
 }
 
-// コンソールのタイトルバーを表示する関数
 void ShowConsoleTitleBar() {
 	HWND hwnd = GetConsoleWindow();
 	if (hwnd != NULL) {
@@ -152,7 +161,6 @@ void ShowConsoleTitleBar() {
 	}
 }
 
-// キーボード入力バッファのクリア関数
 void clearInputBuffer() {
 	while (_kbhit()) {
 		rewind(stdin);
@@ -160,7 +168,6 @@ void clearInputBuffer() {
 	}
 }
 
-// VTシーケンスモードを有効化
 void EnableVTMode() {
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dwMode = 0;
@@ -169,12 +176,10 @@ void EnableVTMode() {
 	SetConsoleMode(hOut, dwMode);
 }
 
-// コンソールウィンドウの表示色をRGB形式で変更
 void SetTextColorRGB(int r, int g, int b) {
 	printf("\x1b[38;2;%d;%d;%dm", r, g, b);
 }
 
-// コンソールウィンドウの背景色をRGB形式で変更
 void SetBackgroundColorRGB(int r, int g, int b) {
 	printf("\x1b[48;2;%d;%d;%dm", r, g, b);
 }

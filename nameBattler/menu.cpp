@@ -1,7 +1,8 @@
 #include "menu.h"
 #include <iostream>
 #include <cstdlib>
-#include <conio.h> 
+#include <conio.h>
+#include "console.h"
 
 int showMenu()
 {
@@ -17,10 +18,18 @@ int showMenu()
     int cursor = 0;
     while (true) {
         system("cls");
-        std::cout << "===== メニュー =====\n";
+
+        // メニュー全体をブロック中央表示
+        const char* header = "===== メニュー =====";
+        PrintCenteredLine(header, (CONSOLE_HEIGHT / 2) - (menuCount / 2) - 2);
+
+        int startRow = (CONSOLE_HEIGHT - menuCount) / 2;
+        if (startRow < 0) startRow = 0;
+
         for (int i = 0; i < menuCount; ++i) {
-            std::cout << (i == cursor ? "> " : "  ");
-            std::cout << menuItems[i] << "\n";
+            std::string line = (i == cursor ? "> " : "  ");
+            line += menuItems[i];
+            PrintCenteredLine(line.c_str(), startRow + i);
         }
 
         int key = _getch();

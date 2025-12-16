@@ -21,3 +21,8 @@ void clearInputBuffer();                   // キーボード入力バッファのクリア関数
 void EnableVTMode();						// VTシーケンスモードを有効化
 void SetTextColorRGB(int r, int g, int b);	//コンソールウィンドウの表示色をRGB形式で変更
 void SetBackgroundColorRGB(int r, int g, int b);	//コンソールウィンドウの背景色をRGB形式で変更
+
+// 追加: 汎用カーソル移動と中央表示ヘルパー
+void SetCursorPosition(int col, int row);   // カーソル位置を設定（0-based）
+void PrintCenteredLine(const char* text, int row); // 指定行に中央揃えで表示
+void PrintCenteredBlock(const char* const* lines, int count); // 複数行をブロック中央表示

@@ -178,7 +178,6 @@ void runGame()
             }
             s2 = generateStatus(id2);
         } else {
-            // ©•ª©g‚ğœŠO‚µ‚Ä“G‚ğ‘I‚Ô
             auto all = LoadMeibo();
             std::vector<std::pair<std::string, std::string>> candidates;
             candidates.reserve(all.size());
